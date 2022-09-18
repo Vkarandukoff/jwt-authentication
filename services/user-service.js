@@ -18,7 +18,7 @@ class UserService {
           const userData = tokenService.validateRefreshToken(refreshToken)
           const tokenFromDb = await tokenService.findToken(refreshToken)
           if(!userData || !tokenFromDb) {
-            res.status(400).json({message: 'User not authorized'})
+            return null
           }
           const user = await userModel.findById(userData.idUser)
           const userDto = new UserDto(user)

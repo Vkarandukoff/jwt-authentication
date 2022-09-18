@@ -71,10 +71,10 @@ class authController {
         const all = req.query.all;
         if(all == 'true') {
           const allUsers = await tokenModel.deleteMany({})
-          res.status(200).json({message: "Succsesful logout all users!", all: allUsers})
+          res.status(200).json({message: "Succsesful logout all users!"})
         } else if (all == 'false') {
           const token = await tokenService.removeToken(refreshToken)    
-          res.status(200).json({message: "Succsesful logout current user!", token: token})
+          res.status(200).json({message: "Succsesful logout current user!"})
         } else {
           res.status(400).json({message: `Param all: ${all} is wrong!`})
         }
@@ -108,7 +108,6 @@ class authController {
       }, (err, resp) => {
         const latency = Math.round(resp.timings.connect)
         res.status(200).send(`Service server latency for google.com = ${latency} ms.`)
-        console.log(err || resp.timings.connect)
       })
     }
   }
