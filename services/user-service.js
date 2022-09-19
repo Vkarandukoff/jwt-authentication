@@ -1,30 +1,61 @@
-const tokenService = require("./token-service");
-const userModel = require('../model/user')
+const userModel = require('../models/user')
+const User = require('../models/user')
+const { defineIdType } = require('./data-service');
+const tokenService = require('./token-service')
 const UserDto = require('../dtos/user-dto')
 
-class UserService {
-    defineIdType(id) {
-        if(id.indexOf('@') != -1) {
-            return 'Email'
-        } else {
-            return 'Phone'
-        }
-    }
+const bcrypt = require('bcrypt');
 
-    async refresh(refreshToken) {
-        if (!refreshToken) {
-            return null
-          }
-          const userData = tokenService.validateRefreshToken(refreshToken)
-          const tokenFromDb = await tokenService.findToken(refreshToken)
-          if(!userData || !tokenFromDb) {
-            return null
-          }
-          const user = await userModel.findById(userData.idUser)
-          const userDto = new UserDto(user)
+class UserService {
+    async signup(id, password) {
+        const candidate = await User.findOne({ id });
+            if(candidate) {
+              return `User: ${id} already exist. Please login!`
+            }
+            const hashPassword = await bcrypt.hash(password, 3);
+            const id_type = defineIdType(id)
+            const user = await User.create({
+                id,
+                id_type,
+                password: hashPassword,
+              });
+            const userDto = new UserDto(user)
             const tokens = await tokenService.generateTokens({...userDto}) // unfold 
             await tokenService.saveToken(userDto.idUser, tokens.refreshToken)
+            
             return tokens.refreshToken
+    }
+
+    async signin(id, password) {
+        const user = await userModel.findOne({id})
+        if(!user) {
+            return `User with id: ${id} was not found. Please register!`
+        }
+        const isPassEquals = await bcrypt.compare(password, user.password)
+        if(!isPassEquals) {
+            return 'Wrong password!'
+        }
+        const userDto = new UserDto(user)
+        const tokens = await tokenService.generateTokens({...userDto}) // unfold 
+        await tokenService.saveToken(userDto.idUser, tokens.refreshToken)
+            
+        return tokens.refreshToken
+    }
+
+    async logout(refreshToken, all) {
+        if(!refreshToken) {
+            return 'User not authorized'
+          }
+
+         if(all == 'true') {
+            const tokenData = await tokenService.removeAllTokens()
+            return "Succsesful logout all users!"
+          } else if (all == 'false') {
+            const token = await tokenService.removeToken(refreshToken)
+            return "Succsesful logout current user!"
+          } else {
+            return `Param all: ${all} is wrong!`
+          }
     }
 }
 
