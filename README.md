@@ -1,3 +1,5 @@
+Made requests with Postman
+
 Create REST API server with bearer token auth. Setup CORS to allow access from any domain. DB - any.
 Token should have expiration time 10 mins and extend it on any user request (except singin/logout)
 DB - MongoDB
